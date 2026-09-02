@@ -1,37 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!--inter-->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    <!--Roboto-->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tokens.css">
     <link rel="stylesheet" href="logar.css">
-    <title>Logar</title>
+    <title>Login — eScouter</title>
 </head>
 <body>
-    <div class="login-card">
-        <h1>
-            <span>e</span>Scouter
-        </h1>
+    <div class="login-page">
+        <div class="login-card">
+            <img src="imagens/escouter.png" alt="eScouter" class="login-logo">
 
-        <p>Área Administrativa</p>
+            <p class="login-subtitle">Área Administrativa</p>
 
-        <form>
+            <form id="login-form">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="admin@escouter.com" required autocomplete="username">
 
-            <label>Email</label>
-            <input type="email" placeholder="Email">
+                <label for="senha">Senha</label>
+                <div class="password-field">
+                    <input type="password" id="senha" name="senha" placeholder="Sua senha" required autocomplete="current-password">
+                    <button type="button" class="toggle-senha" aria-label="Mostrar senha" aria-pressed="false">
+                        <svg class="icon-eye" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+                        </svg>
+                    </button>
+                </div>
 
-            <label>Senha</label>
-            <input type="password" placeholder="Senha">
+                <p class="login-error" id="login-error" role="alert" hidden></p>
 
-            <button>Entrar</button>
+                <button type="submit" class="btn-entrar">Entrar</button>
 
-            <p2>Ambiente seguro e Monitorado</p2>
-        </form>
+                <p class="login-note">Ambiente seguro e monitorado</p>
+            </form>
+        </div>
     </div>
+
+<script src="script.js"></script>
 </body>
 </html>
