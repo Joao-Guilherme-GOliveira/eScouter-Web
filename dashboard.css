@@ -21,6 +21,8 @@ body{
   position: sticky;
   top: 0;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-logo{
@@ -62,6 +64,15 @@ body{
 .nav-item.active{
   background: var(--color-brand-primary);
   color: var(--color-text-inverse);
+}
+
+.sidebar-logout{
+  margin-top: auto;
+  border: none;
+  background: none;
+  font-family: var(--font-base);
+  cursor: pointer;
+  width: 100%;
 }
 
 /* ---------- Main content ---------- */
