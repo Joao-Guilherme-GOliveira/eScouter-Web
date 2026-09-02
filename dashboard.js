@@ -1,62 +1,67 @@
 // eScouter — Dashboard (admin)
-// Dados de exemplo por enquanto — entram via Firestore depois.
+// Lê e grava direto na coleção "usuarios" do Firestore,
+// filtrando por tipoUsuario ("Atleta" ou "Clube/Olheiro").
 
-const dados = {
+import { db } from "./firebase-init.js";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const ENTIDADES = {
   atletas: {
+    tipoUsuario: "Atleta",
     label: "Atleta",
-    labelPlural: "Atletas",
     colunas: [
-      ["Atletas", "nome"],
-      ["ID", "id"],
+      ["Nome", "nome"],
       ["Idade", "idade"],
-      ["Clube", "clube"],
       ["Cidade", "cidade"],
+      ["Estado", "estado"],
       ["Posição", "posicao"]
     ],
     campos: [
-      { chave: "nome", label: "Nome", tipo: "text" },
-      { chave: "idade", label: "Idade", tipo: "number", linha: 1 },
-      { chave: "cidade", label: "Cidade", tipo: "text", linha: 1 },
-      { chave: "posicao", label: "Posição", tipo: "text" },
-      { chave: "clube", label: "Clube", tipo: "text" }
+      { chave: "nome", label: "Nome" },
+      { chave: "dataNascimento", label: "Data de Nascimento (DD/MM/AAAA)", linha: 1 },
+      { chave: "cidade", label: "Cidade", linha: 1 },
+      { chave: "estado", label: "Estado", linha: 2 },
+      { chave: "posicao", label: "Posição", linha: 2 },
+      { chave: "email", label: "Email", linha: 3 },
+      { chave: "telefone", label: "Telefone", linha: 3 },
+      { chave: "altura", label: "Altura (cm)", linha: 4 },
+      { chave: "peso", label: "Peso (kg)", linha: 4 },
+      { chave: "experiencia", label: "Experiência" },
+      { chave: "descricao", label: "Descrição" }
     ],
-    registros: [
-      { id: 1, nome: "Joao Braw", idade: 17, clube: "S/T", cidade: "Cariacica-ES", posicao: "Zagueiro" },
-      { id: 2, nome: "Danilo", idade: 18, clube: "Serrão", cidade: "Serra-ES", posicao: "Atacante" },
-      { id: 3, nome: "Fillipy Magrão", idade: 18, clube: "Fluminense", cidade: "Novo Horizonte-ES", posicao: "MC" },
-      { id: 4, nome: "Pablo Nistal", idade: 18, clube: "União FC", cidade: "Vitória-ES", posicao: "MC" },
-      { id: 5, nome: "Yan Hashirama", idade: 16, clube: "IFES-Serra", cidade: "Vitória-ES", posicao: "VOL" },
-      { id: 6, nome: "Pedro Sousa", idade: 19, clube: "S/T", cidade: "Cariacica-ES", posicao: "ZAG" },
-      { id: 7, nome: "Davi Belz", idade: 18, clube: "S/T", cidade: "Serra-ES", posicao: "LE" }
-    ]
+    registros: [],
+    carregando: true
   },
   clubes: {
+    tipoUsuario: "Clube/Olheiro",
     label: "Clube",
-    labelPlural: "Clubes",
     colunas: [
-      ["Clubes", "nome"],
-      ["ID", "id"],
-      ["Fundação", "fundacao"],
-      ["Atletas", "atletas"],
+      ["Nome", "nome"],
       ["Cidade", "cidade"],
-      ["Categoria", "categoria"]
+      ["Estado", "estado"],
+      ["CNPJ", "cnpj"]
     ],
     campos: [
-      { chave: "nome", label: "Nome do Clube", tipo: "text" },
-      { chave: "fundacao", label: "Fundação", tipo: "number", linha: 1 },
-      { chave: "cidade", label: "Cidade", tipo: "text", linha: 1 },
-      { chave: "atletas", label: "Atletas", tipo: "number" },
-      { chave: "categoria", label: "Categoria", tipo: "text" }
+      { chave: "nome", label: "Nome do Clube" },
+      { chave: "dataNascimento", label: "Data de Fundação (DD/MM/AAAA)", linha: 1 },
+      { chave: "cidade", label: "Cidade", linha: 1 },
+      { chave: "estado", label: "Estado", linha: 2 },
+      { chave: "cnpj", label: "CNPJ", linha: 2 },
+      { chave: "email", label: "Email", linha: 3 },
+      { chave: "telefone", label: "Telefone", linha: 3 },
+      { chave: "descricao", label: "Descrição" }
     ],
-    registros: [
-      { id: 1, nome: "IFES Serra", fundacao: 2024, atletas: 15, cidade: "Serra-ES", categoria: "Escolar" },
-      { id: 2, nome: "União FC", fundacao: 2015, atletas: 40, cidade: "Vitoria-ES", categoria: "Amador" },
-      { id: 3, nome: "IFES Vix", fundacao: 2010, atletas: 20, cidade: "Vitória-ES", categoria: "Escolar" },
-      { id: 4, nome: "Rio Branco", fundacao: 1913, atletas: 80, cidade: "Cariacica-ES", categoria: "Profissional" },
-      { id: 5, nome: "Porto Vitória", fundacao: 2014, atletas: 67, cidade: "Serra-ES", categoria: "Profissional" },
-      { id: 6, nome: "Bons Amigos FC", fundacao: 2019, atletas: 12, cidade: "Serra-ES", categoria: "Amador" },
-      { id: 7, nome: "Álvares Cabral", fundacao: 1902, atletas: 42, cidade: "Vitória-ES", categoria: "Amador" }
-    ]
+    registros: [],
+    carregando: true
   }
 };
 
@@ -78,22 +83,63 @@ const deleteText = document.getElementById("delete-text");
 const btnCancelarExcluir = document.getElementById("btn-cancelar-excluir");
 const btnConfirmarExcluir = document.getElementById("btn-confirmar-excluir");
 
+// --- Utilidades ---
+
+function calcularIdade(dataNascimentoStr) {
+  if (!dataNascimentoStr) return "—";
+  const partes = dataNascimentoStr.split("/").map(Number);
+  const [dia, mes, ano] = partes;
+  if (!dia || !mes || !ano) return "—";
+
+  const hoje = new Date();
+  const nascimento = new Date(ano, mes - 1, dia);
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  const aindaNaoFezAniversario =
+    hoje.getMonth() < nascimento.getMonth() ||
+    (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() < nascimento.getDate());
+  if (aindaNaoFezAniversario) idade--;
+  return idade;
+}
+
+function formatarDataHoje() {
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  return `${dia}/${mes}/${hoje.getFullYear()}`;
+}
+
+// --- Renderização ---
+
 function renderContadores() {
-  document.getElementById("count-atletas").textContent = dados.atletas.registros.length;
-  document.getElementById("count-clubes").textContent = dados.clubes.registros.length;
+  document.getElementById("count-atletas").textContent = ENTIDADES.atletas.registros.length;
+  document.getElementById("count-clubes").textContent = ENTIDADES.clubes.registros.length;
 }
 
 function renderTabela() {
-  const cfg = dados[entidadeAtual];
+  const cfg = ENTIDADES[entidadeAtual];
 
   tableHead.innerHTML =
     "<tr>" +
     cfg.colunas.map(([label]) => `<th>${label}</th>`).join("") +
     "<th>Ações</th></tr>";
 
+  if (cfg.carregando) {
+    tableBody.innerHTML = `<tr><td colspan="${cfg.colunas.length + 1}">Carregando...</td></tr>`;
+    return;
+  }
+
+  if (cfg.registros.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="${cfg.colunas.length + 1}">Nenhum registro encontrado.</td></tr>`;
+    return;
+  }
+
   tableBody.innerHTML = cfg.registros
     .map((registro) => {
-      const valores = cfg.colunas.map(([, chave]) => registro[chave]);
+      const valores = cfg.colunas.map(([, chave]) => {
+        if (chave === "idade") return calcularIdade(registro.dataNascimento);
+        const valor = registro[chave];
+        return valor === undefined || valor === "" ? "—" : valor;
+      });
 
       return (
         "<tr>" +
@@ -117,7 +163,7 @@ function renderTabela() {
 }
 
 function atualizarBotaoNovo() {
-  btnNovo.textContent = `Novo ${dados[entidadeAtual].label}`;
+  btnNovo.textContent = `Novo ${ENTIDADES[entidadeAtual].label}`;
 }
 
 function trocarEntidade(entidade) {
@@ -129,29 +175,34 @@ function trocarEntidade(entidade) {
   renderTabela();
 }
 
+// --- Formulário (Adicionar / Alterar) ---
+
 function construirFormulario(registro) {
-  const cfg = dados[entidadeAtual];
+  const cfg = ENTIDADES[entidadeAtual];
   entityForm.innerHTML = "";
 
   let linhaAberta = null;
+  let linhaAtualId = null;
 
   cfg.campos.forEach((campo) => {
-    const valor = registro ? registro[campo.chave] : "";
+    const valor = registro && registro[campo.chave] !== undefined ? registro[campo.chave] : "";
     const campoHtml = `
       <div class="form-field">
         <label for="campo-${campo.chave}">${campo.label}</label>
-        <input type="${campo.tipo}" id="campo-${campo.chave}" name="${campo.chave}" value="${valor}">
+        <input type="text" id="campo-${campo.chave}" name="${campo.chave}" value="${valor}">
       </div>`;
 
     if (campo.linha) {
-      if (!linhaAberta) {
+      if (linhaAberta === null || campo.linha !== linhaAtualId) {
         linhaAberta = document.createElement("div");
         linhaAberta.className = "form-row";
         entityForm.appendChild(linhaAberta);
+        linhaAtualId = campo.linha;
       }
       linhaAberta.insertAdjacentHTML("beforeend", campoHtml);
     } else {
       linhaAberta = null;
+      linhaAtualId = null;
       entityForm.insertAdjacentHTML("beforeend", campoHtml);
     }
   });
@@ -160,7 +211,7 @@ function construirFormulario(registro) {
     "beforeend",
     `<div class="modal-actions">
       <button type="button" class="btn-ghost" id="btn-cancelar-form">Cancelar</button>
-      <button type="submit" class="btn-primary">Salvar ${dados[entidadeAtual].label}</button>
+      <button type="submit" class="btn-primary" id="btn-salvar-form">Salvar ${cfg.label}</button>
     </div>`
   );
 
@@ -171,7 +222,7 @@ function construirFormulario(registro) {
 
 function abrirModalForm(modo, registro) {
   idEmEdicao = registro ? registro.id : null;
-  formModalTitle.textContent = `${modo} ${dados[entidadeAtual].label}`;
+  formModalTitle.textContent = `${modo} ${ENTIDADES[entidadeAtual].label}`;
   construirFormulario(registro);
   formModal.hidden = false;
 }
@@ -183,13 +234,35 @@ function fecharModalForm() {
 
 function abrirModalExcluir(id) {
   idParaExcluir = id;
-  deleteText.textContent = `Você tem certeza que deseja excluir este ${dados[entidadeAtual].label.toLowerCase()}? Essa ação não poderá ser desfeita.`;
+  deleteText.textContent = `Você tem certeza que deseja excluir este ${ENTIDADES[entidadeAtual].label.toLowerCase()}? Essa ação não poderá ser desfeita.`;
   deleteModal.hidden = false;
 }
 
 function fecharModalExcluir() {
   idParaExcluir = null;
   deleteModal.hidden = true;
+}
+
+// --- Firestore: listeners em tempo real ---
+
+function iniciarListener(entidadeKey) {
+  const cfg = ENTIDADES[entidadeKey];
+  const q = query(collection(db, "usuarios"), where("tipoUsuario", "==", cfg.tipoUsuario));
+
+  onSnapshot(
+    q,
+    (snapshot) => {
+      cfg.registros = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      cfg.carregando = false;
+      renderContadores();
+      if (entidadeAtual === entidadeKey) renderTabela();
+    },
+    (erro) => {
+      console.error(`Erro ao carregar ${entidadeKey}:`, erro);
+      cfg.carregando = false;
+      renderTabela();
+    }
+  );
 }
 
 // --- Eventos ---
@@ -205,54 +278,65 @@ tableBody.addEventListener("click", (e) => {
   const deleteBtn = e.target.closest(".icon-btn.delete");
 
   if (editBtn) {
-    const id = Number(editBtn.dataset.id);
-    const registro = dados[entidadeAtual].registros.find((r) => r.id === id);
+    const id = editBtn.dataset.id;
+    const registro = ENTIDADES[entidadeAtual].registros.find((r) => r.id === id);
     abrirModalForm("Alterar", registro);
   }
 
   if (deleteBtn) {
-    abrirModalExcluir(Number(deleteBtn.dataset.id));
+    abrirModalExcluir(deleteBtn.dataset.id);
   }
 });
 
-entityForm.addEventListener("submit", (e) => {
+entityForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const cfg = dados[entidadeAtual];
+  const cfg = ENTIDADES[entidadeAtual];
   const valores = {};
-
   cfg.campos.forEach((campo) => {
-    const input = document.getElementById(`campo-${campo.chave}`);
-    valores[campo.chave] = campo.tipo === "number"
-      ? Number(input.value)
-      : input.value;
+    valores[campo.chave] = document.getElementById(`campo-${campo.chave}`).value;
   });
 
-  if (idEmEdicao !== null) {
-    // Alterar: encontra o registro existente e sobrescreve os campos editados
-    const registro = cfg.registros.find((r) => r.id === idEmEdicao);
-    Object.assign(registro, valores);
-  } else {
-    // Adicionar: cria um novo registro com o próximo id disponível
-    const proximoId = cfg.registros.length
-      ? Math.max(...cfg.registros.map((r) => r.id)) + 1
-      : 1;
-    cfg.registros.push({ id: proximoId, ...valores });
-  }
+  const btnSalvar = document.getElementById("btn-salvar-form");
+  btnSalvar.disabled = true;
+  btnSalvar.textContent = "Salvando...";
 
-  renderContadores();
-  renderTabela();
-  fecharModalForm();
+  try {
+    if (idEmEdicao !== null) {
+      await updateDoc(doc(db, "usuarios", idEmEdicao), valores);
+    } else {
+      await addDoc(collection(db, "usuarios"), {
+        ...valores,
+        tipoUsuario: cfg.tipoUsuario,
+        dataCadastro: formatarDataHoje(),
+        midias: []
+      });
+    }
+    fecharModalForm();
+  } catch (erro) {
+    console.error("Erro ao salvar:", erro);
+    alert("Não foi possível salvar. Veja o console para detalhes.");
+    btnSalvar.disabled = false;
+    btnSalvar.textContent = `Salvar ${cfg.label}`;
+  }
 });
 
 btnCancelarExcluir.addEventListener("click", fecharModalExcluir);
 
-btnConfirmarExcluir.addEventListener("click", () => {
-  const cfg = dados[entidadeAtual];
-  cfg.registros = cfg.registros.filter((r) => r.id !== idParaExcluir);
-  renderContadores();
-  renderTabela();
-  fecharModalExcluir();
+btnConfirmarExcluir.addEventListener("click", async () => {
+  btnConfirmarExcluir.disabled = true;
+  btnConfirmarExcluir.textContent = "Excluindo...";
+
+  try {
+    await deleteDoc(doc(db, "usuarios", idParaExcluir));
+    fecharModalExcluir();
+  } catch (erro) {
+    console.error("Erro ao excluir:", erro);
+    alert("Não foi possível excluir. Veja o console para detalhes.");
+  } finally {
+    btnConfirmarExcluir.disabled = false;
+    btnConfirmarExcluir.textContent = "Excluir";
+  }
 });
 
 [formModal, deleteModal].forEach((overlay) => {
@@ -264,6 +348,7 @@ btnConfirmarExcluir.addEventListener("click", () => {
 });
 
 // --- Inicialização ---
-renderContadores();
 atualizarBotaoNovo();
 renderTabela();
+iniciarListener("atletas");
+iniciarListener("clubes");
