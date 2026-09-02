@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <title>Dashboard — eScouter</title>
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-logo"><span>e</span>Scouter</div>
+
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active" data-nav="dashboard">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="3" y="4" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item" data-nav="config">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+                        <path d="M19.4 13a7.97 7.97 0 0 0 0-2l2.1-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.9 3h-4l-.4 2.9a8 8 0 0 0-1.7 1l-2.5-1-2 3.4L6.4 11a7.97 7.97 0 0 0 0 2l-2.1 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 3h4l.4-2.9a8 8 0 0 0 1.7-1l2.5 1 2-3.4-2.1-1.6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                    </svg>
+                    Configurações
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            <h1 class="page-title">Dashboard</h1>
+
+            <div class="top-row">
+                <div class="stat-cards">
+                    <button type="button" class="stat-card active" data-entity="atletas">
+                        <span class="stat-icon icon-athletes">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="stat-label">Atletas</span>
+                        <span class="stat-value" id="count-atletas">0</span>
+                    </button>
+
+                    <button type="button" class="stat-card" data-entity="clubes">
+                        <span class="stat-icon icon-clubs">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="3" width="16" height="18" rx="1.5" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M9 21v-4h6v4M8 7h1M15 7h1M8 11h1M15 11h1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <span class="stat-label">Clubes</span>
+                        <span class="stat-value" id="count-clubes">0</span>
+                    </button>
+                </div>
+
+                <button type="button" class="btn-primary" id="btn-novo">Novo Atleta</button>
+            </div>
+
+            <div class="table-wrap">
+                <table class="data-table" id="data-table">
+                    <thead id="table-head"></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Adicionar / Alterar -->
+    <div class="modal-overlay" id="form-modal" hidden>
+        <div class="modal">
+            <h2 id="form-modal-title">Adicionar Atleta</h2>
+            <form id="entity-form"></form>
+        </div>
+    </div>
+
+    <!-- Modal Excluir -->
+    <div class="modal-overlay" id="delete-modal" hidden>
+        <div class="modal modal-sm">
+            <h2>Excluir</h2>
+            <p class="modal-text" id="delete-text">Você tem certeza que deseja excluir este registro? Essa ação não poderá ser desfeita.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" id="btn-cancelar-excluir">Cancelar</button>
+                <button type="button" class="btn-danger" id="btn-confirmar-excluir">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

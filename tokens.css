@@ -11,10 +11,17 @@
   --color-brand-accent: #2A5FD0;   /* azul de destaque — links, foco, hover */
   --color-brand-glow: #3B82F6;     /* azul claro — glow/gradiente (eco do app mobile) */
 
-  /* --- Superfícies claras (admin/CRUD) --- */
+  /* --- Superfícies claras (reservado — não usado no admin por ora) --- */
   --color-bg-app: #F3F5FA;
   --color-surface: #FFFFFF;
   --color-border: #E1E5EE;
+
+  /* --- Superfícies escuras (admin/dashboard) --- */
+  --color-dark-bg: #101420;        /* fundo da área de conteúdo */
+  --color-dark-surface: #171B27;   /* cards, tabela */
+  --color-dark-surface-alt: #1D2230; /* linhas alternadas, botões de ação */
+  --color-dark-border: rgba(255,255,255,0.07);
+  --color-dark-divider: rgba(42,95,208,0.35); /* linha azulada entre linhas da tabela */
 
   /* --- Texto --- */
   --color-text-primary: #12151C;
